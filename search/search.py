@@ -18,8 +18,6 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
-from game import Directions
-from typing import List
 
 class SearchProblem:
     """
@@ -64,18 +62,17 @@ class SearchProblem:
         util.raiseNotDefined()
 
 
-
-
-def tinyMazeSearch(problem: SearchProblem) -> List[Directions]:
+def tinyMazeSearch(problem):
     """
     Returns a sequence of moves that solves tinyMaze.  For any other maze, the
     sequence of moves will be incorrect, so only use this for tinyMaze.
     """
+    from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
-def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
+def depthFirstSearch(problem: SearchProblem):
     """
     Search the deepest nodes in the search tree first.
 
@@ -89,30 +86,159 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Initialize the stack to hold nodes to explore
+    stack = util.Stack()
 
-def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
+    # Initialize a set to keep track of visited nodes
+    visited = set()
+
+    # Push the start state onto the stack along with an empty list of actions
+    stack.push((problem.getStartState(), []))
+
+    # Continue searching until the stack is empty
+    while not stack.isEmpty():
+        # Pop the current state and the actions taken to reach this state
+        current_state, actions = stack.pop()
+
+        # If the current state is the goal state, return the list of actions
+        if problem.isGoalState(current_state):
+            return actions
+
+        # Check if the current state has already been visited
+        if current_state not in visited:
+            # Mark the current state as visited
+            visited.add(current_state)
+
+            # Get the successors of the current state
+            successors = problem.getSuccessors(current_state)
+
+            # Push each successor onto the stack along with the actions taken to reach it
+            for next_state, action, _ in successors:
+                stack.push((next_state, actions + [action]))
+
+    # If no solution is found, return an empty list
+    return []
+
+def breadthFirstSearch(problem: SearchProblem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
 
-def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
+    # Create a queue to store nodes to be explored
+    frontier = util.Queue()
+
+    # Initialize the frontier with the start state
+    frontier.push((problem.getStartState(), []))
+
+    # Create a set to keep track of explored states
+    explored = set()
+
+    # Start BFS
+    while not frontier.isEmpty():
+        # Get the current state and the actions taken to reach this state
+        current_state, actions = frontier.pop()
+
+        # Check if the current state is the goal state
+        if problem.isGoalState(current_state):
+            return actions
+
+        # Check if the current state has already been explored
+        if current_state not in explored:
+            # Add the current state to the explored set
+            explored.add(current_state)
+
+            # Explore the successors of the current state
+            for successor, action, _ in problem.getSuccessors(current_state):
+                # Check if the successor state has already been explored or in the frontier
+                if successor not in explored:
+                    # Add the successor state and the actions to reach it to the frontier
+                    frontier.push((successor, actions + [action]))
+
+    # If no solution is found
+    return []
+
+
+def uniformCostSearch(problem: SearchProblem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Initialize priority queue with start state and its cost
+    start_state = problem.getStartState()
+    frontier = util.PriorityQueue()
+    frontier.push((start_state, [], 0), 0)  # (state, path, cost)
 
-def nullHeuristic(state, problem=None) -> float:
+    # Initialize explored set
+    explored = set()
+
+    # Start searching
+    while not frontier.isEmpty():
+        current_state, current_path, current_cost = frontier.pop()
+
+        # Check if current state is goal state
+        if problem.isGoalState(current_state):
+            return current_path
+
+        # Check if current state is already explored
+        if current_state not in explored:
+            # Mark current state as explored
+            explored.add(current_state)
+
+            # Expand current state
+            for successor, action, step_cost in problem.getSuccessors(current_state):
+                # Calculate total cost for successor node
+                total_cost = current_cost + step_cost
+                # Add successor node to frontier
+                frontier.push((successor, current_path + [action], total_cost), total_cost)
+
+    return []  # Return empty path if no solution found
+
+
+def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
     return 0
 
-def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Directions]:
+def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Initialize the start state
+    start_state = problem.getStartState()
+
+    # Initialize the frontier using a priority queue
+    frontier = util.PriorityQueue()
+    frontier.push((start_state, [], 0), 0)  # (state, actions, cost)
+
+    # Initialize an empty set to keep track of explored states
+    explored = set()
+
+    # Start A* search
+    while not frontier.isEmpty():
+        # Pop the node from the frontier with the lowest priority
+        current_state, actions, cost = frontier.pop()
+
+        # Check if the current state is the goal state
+        if problem.isGoalState(current_state):
+            return actions
+
+        # Check if the current state has been explored
+        if current_state not in explored:
+            # Mark the current state as explored
+            explored.add(current_state)
+
+            # Get successors of the current state
+            successors = problem.getSuccessors(current_state)
+
+            for successor, action, step_cost in successors:
+                # Calculate the total cost from start to successor through current state
+                total_cost = cost + step_cost
+
+                # Calculate the priority (f(n) = g(n) + h(n))
+                priority = total_cost + heuristic(successor, problem)
+
+                # Add the successor to the frontier
+                frontier.push((successor, actions + [action], total_cost), priority)
+
+    # If no solution found
+    return []
+
+
 
 # Abbreviations
 bfs = breadthFirstSearch
