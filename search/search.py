@@ -196,47 +196,39 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
-def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
-    """Search the node that has the lowest combined cost and heuristic first."""
-    # Initialize the start state
-    start_state = problem.getStartState()
 
-    # Initialize the frontier using a priority queue
-    frontier = util.PriorityQueue()
-    frontier.push((start_state, [], 0), 0)  # (state, actions, cost)
+def aStarSearch(problem, heuristic=nullHeuristic):
+    from util import PriorityQueue
 
-    # Initialize an empty set to keep track of explored states
-    explored = set()
+    startState = problem.getStartState()
+    frontier = PriorityQueue()
+    # Push tuple: (state, actions, cost-so-far), with priority = g(n) + h(n)
+    frontier.push((startState, [], 0), heuristic(startState, problem))
 
-    # Start A* search
+    # visited: dict để lưu chi phí nhỏ nhất để đến được state
+    visited = {}
+
     while not frontier.isEmpty():
-        # Pop the node from the frontier with the lowest priority
-        current_state, actions, cost = frontier.pop()
+        state, actions, costSoFar = frontier.pop()
 
-        # Check if the current state is the goal state
-        if problem.isGoalState(current_state):
+        # Nếu state đã thăm với chi phí nhỏ hơn thì bỏ qua
+        if state in visited and visited[state] <= costSoFar:
+            continue
+
+        visited[state] = costSoFar
+
+        # Nếu là goal state
+        if problem.isGoalState(state):
             return actions
 
-        # Check if the current state has been explored
-        if current_state not in explored:
-            # Mark the current state as explored
-            explored.add(current_state)
+        for nextState, action, stepCost in problem.getSuccessors(state):
+            newActions = actions + [action]
+            newCost = costSoFar + stepCost
+            priority = newCost + heuristic(nextState, problem)
+            frontier.push((nextState, newActions, newCost), priority)
 
-            # Get successors of the current state
-            successors = problem.getSuccessors(current_state)
-
-            for successor, action, step_cost in successors:
-                # Calculate the total cost from start to successor through current state
-                total_cost = cost + step_cost
-
-                # Calculate the priority (f(n) = g(n) + h(n))
-                priority = total_cost + heuristic(successor, problem)
-
-                # Add the successor to the frontier
-                frontier.push((successor, actions + [action], total_cost), priority)
-
-    # If no solution found
     return []
+
 
 
 
